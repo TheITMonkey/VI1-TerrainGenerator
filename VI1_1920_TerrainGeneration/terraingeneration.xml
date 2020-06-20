@@ -1,0 +1,129 @@
+<?xml version="1.0" ?>
+<project name="Terrain Generation" width="1536" height="768" >
+	<assets>
+		<constants>
+			<constant name="TEX_MAP_SIZE" value="4096" />
+			<constant name="TEX_MAP_DIV8" value="512" />
+			<constant name="GRID_VERTICES" value="64" />
+			<constant name="GRID_LENGTH" value="1024" />
+		</constants>
+		
+		<attributes>
+			<attribute name="TEX_SIZE" data="INT" type="RENDERER" value="TEX_MAP_SIZE" />
+			<!-- CHANGEABLE MAP SEED -->
+			<attribute name="MAP_SEED" data="INT" type="RENDERER" value="0" />
+			<!--attribute name="OUTTER_LEVEL" data="FLOAT" type="RENDERER" value="8.0" /-->
+			<!--attribute name="INNER_LEVEL" data="FLOAT" type="RENDERER" value="8.0" /-->
+			<attribute name="TESS_LEVEL" data="FLOAT" type="RENDERER" value="8.0" />
+			<attribute name="WATER_ELEVATION" data="FLOAT" type="RENDERER" value="0.0" />
+		</attributes>
+		
+		<scenes>
+			<scene name="Ground">
+				<geometry name="Ground" type="GRID" material="Ground" DIVISIONS="GRID_VERTICES" LENGTH="GRID_LENGTH" />
+			</scene>
+			
+			<scene name="Water">
+				<geometry name="Water" type="GRID" material="Water" DIVISIONS="GRID_VERTICES" LENGTH="GRID_LENGTH" />
+			</scene>
+			
+			<!-- If changed GRID_LENGTH correct the translations here -->
+			<scene name="SkyBox">
+				<geometry name="BoxUP" type="GRID" material="Sky" DIVISIONS="64" LENGTH="GRID_LENGTH" >
+					<ROTATE x="1.0" y="0.0" z="0.0" w="90.0" />
+					<TRANSLATE x="0.0" y="512" z="512" />
+				</geometry>
+				<geometry name="BoxDOWN" type="GRID" material="Sky" DIVISIONS="64" LENGTH="GRID_LENGTH" >
+					<ROTATE x="-1.0" y="0.0" z="0.0" w="90.0" />
+					<TRANSLATE x="0.0" y="512" z="-512" />
+				</geometry>
+				<geometry name="BoxRIGHT" type="GRID" material="Sky" DIVISIONS="64" LENGTH="GRID_LENGTH" >
+					<ROTATE x="0.0" y="0.0" z="1.0" w="90.0" />
+					<TRANSLATE x="-512" y="512" z="0.0" />
+				</geometry>
+				<geometry name="BoxLEFT" type="GRID" material="Sky" DIVISIONS="64" LENGTH="GRID_LENGTH" >
+					<ROTATE x="0.0" y="0.0" z="-1.0" w="90.0" />
+					<TRANSLATE x="512" y="512" z="0.0" />
+				</geometry>
+			</scene>
+			
+			<!-- EXTRAS -->
+			<scene name="Tree">
+				<file name="models/tree.obj" />
+			</scene>
+			<scene name="Rock">
+				<file name="models/rock.obj" />
+			</scene>
+		</scenes>
+		
+		<viewports>
+			<viewport name="MainViewport" >
+				<CLEAR_COLOR r="1.0" g="1.0" b="1.0" a="1.0" />
+			</viewport>
+		</viewports>
+		
+		<cameras>
+			<camera name="MainCamera" >
+				<viewport name="MainViewport" />
+				<POSITION x="512" y="95" z="512" />
+				<VIEW x="0.57735" y="-0.57735" z="0.57735" />
+				<FOV value="60.0" />
+				<NEAR value="0.5" />
+				<FAR value="1000.0" />
+				<TYPE value="PERSPECTIVE" />
+			</camera>
+		</cameras>
+		
+		<lights>
+			<light name="Sun" >
+				<!--POSITION x="-150.0" y="150.0" z="0.0" /-->
+				<DIRECTION x="1.0" y="-2.5" z="0.0" />
+				<COLOR r="0.9" g="0.9" b="0.9" />
+				<AMBIENT r="0.3" g="0.3" b="0.3" />
+				<ENABLED value="true" />
+			</light>
+		</lights>
+		
+		<materialLibs>
+			<materialLib filename="terrainLibrary.mlib" />
+		</materialLibs>
+	</assets>
+	
+	<pipelines>
+		<pipeline name="TerrainGeneration" >
+			<!-- COMPUTE SHADER PASS THAT CREATES THE HEIGHT MAP RANDOMLY -->
+			<pass class="compute" name="heightMap">
+				<mode value="RUN_ONCE" />
+				<material name="groundHeights" fromLibrary="Terrain" dimX="TEX_MAP_DIV8" dimY="TEX_MAP_DIV8" dimZ="1" />
+			</pass>
+			<!-- COMPUTE SHADER PASS THAT COMPUTES THE NORMALS FOR THE HEIGHTMAP -->
+			<pass class="compute" name="normalMap">
+				<mode value="RUN_ONCE" />
+				<material name="normalsMap" fromLibrary="Terrain" dimX="TEX_MAP_DIV8" dimY="TEX_MAP_DIV8" dimZ="1" />
+			</pass>
+			
+			<pass name="DrawTerrain" class="default" >
+				<scenes>
+					<scene name="Ground" />
+				</scenes>
+				<camera name="MainCamera" />
+				<viewport name="MainViewport" />
+				<lights>
+					<light name="Sun" />
+				</lights>
+				<materialMaps>
+					<map fromMaterial="Ground" toLibrary="Terrain" toMaterial="TerrainTexture" />
+				</materialMaps>
+				<!--COLOR_CLEAR value="false" /-->
+				<DEPTH_CLEAR value="true" />
+			</pass>
+		</pipeline>
+	</pipelines>
+	
+	<interface>
+		<window label="Terrain Attributes">
+			<var label="Tesselation Level" type="RENDERER" context="CURRENT" component="TESS_LEVEL" def="min=1 max=16 step=0.01" />
+			<var label="Water Elevation" type="RENDERER" context="CURRENT" component="WATER_ELEVATION" def="min=-128 max=128 step=0.25" />
+		</window>
+	</interface>
+</project>

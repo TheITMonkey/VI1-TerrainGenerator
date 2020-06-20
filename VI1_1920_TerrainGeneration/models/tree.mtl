@@ -1,0 +1,12 @@
+# Blender MTL File: 'tree.blend1'
+# Material Count: 2
+
+newmtl flat_green
+Ka 0.0000 0.2000 0.0000
+Kd 0.3330 0.4190 0.1840
+illum 1
+
+newmtl flat_brown
+Ka 0.2000 0.0000 0.0000
+Kd 0.5450 0.2700 0.0740
+illum 1
